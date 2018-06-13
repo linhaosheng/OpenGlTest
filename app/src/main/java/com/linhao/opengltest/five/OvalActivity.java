@@ -63,15 +63,15 @@ public class OvalActivity extends AppCompatActivity {
     private final int vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
 
     //顶点之间的偏移量
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
+    private final int vertexStride = 0; // 每个顶点四个字节
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mProjectMatrix = new float[16];
     private final float[] mViewMatrix = new float[16];
     private int mMatrixHandler;
-    private final int radius = 10;
+    private final float radius = 1.0f;
     private float[] shapePos;
-    private int n=360;  //切割份数
+    private int n = 360;  //切割份数
 
 
     private float[] createPositions() {
@@ -124,18 +124,18 @@ public class OvalActivity extends AppCompatActivity {
             GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             //申请底层空间
             ByteBuffer bb = ByteBuffer.allocateDirect(
-                    triangleCoords.length * 4);
+                    shapePos.length * 4);
             bb.order(ByteOrder.nativeOrder());
             //将坐标数据转换为FloatBuffer，用以传入给OpenGL ES程序
             vertexBuffer = bb.asFloatBuffer();
-            vertexBuffer.put(triangleCoords);
+            vertexBuffer.put(shapePos);
             vertexBuffer.position(0);
 
-            ByteBuffer cc = ByteBuffer.allocateDirect(index.length * 2);
-            cc.order(ByteOrder.nativeOrder());
-            indexBuffer = cc.asShortBuffer();
-            indexBuffer.put(index);
-            indexBuffer.position(0);
+//            ByteBuffer cc = ByteBuffer.allocateDirect(index.length * 2);
+//            cc.order(ByteOrder.nativeOrder());
+//            indexBuffer = cc.asShortBuffer();
+//            indexBuffer.put(index);
+//            indexBuffer.position(0);
 
             int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER,
                     vertexShaderCode);
@@ -190,9 +190,9 @@ public class OvalActivity extends AppCompatActivity {
             //绘制三角形
             //  GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
             //正方形
-           // GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
+            // GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
 
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, shapePos.length/3);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN, 0, shapePos.length / 3);
             //禁止顶点数组的句柄
             GLES20.glDisableVertexAttribArray(mPositionHandle);
         }

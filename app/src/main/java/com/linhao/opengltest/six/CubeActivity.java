@@ -1,4 +1,4 @@
-package com.linhao.opengltest.four;
+package com.linhao.opengltest.six;
 
 import android.content.Context;
 import android.opengl.GLES20;
@@ -23,45 +23,69 @@ import javax.microedition.khronos.opengles.GL10;
  * 等腰直角三角形和彩色的三角形
  */
 
-public class SquareActivity extends AppCompatActivity {
+public class CubeActivity extends AppCompatActivity {
 
 
-    private final String vertexShaderCode = "attribute vec4 vPosition;\n" +
-            "uniform mat4 vMatrix;\n" +
-            "void main() {\n" +
-            "    gl_Position = vMatrix*vPosition;\n" +
+    private final String vertexShaderCode = "attribute vec4 vPosition;" +
+            "uniform mat4 vMatrix;" +
+            "varying  vec4 vColor;" +
+            "attribute vec4 aColor;" +
+            "void main() {" +
+            "  gl_Position = vMatrix*vPosition;" +
+            "  vColor=aColor;" +
             "}";
 
-    private final String fragmentShaderCode = "precision mediump float;\n" +
-            " uniform vec4 vColor;\n" +
-            " void main() {\n" +
-            "     gl_FragColor = vColor;\n" +
-            " }";
 
-    float triangleCoords[] = {
-            -0.5f,  0.5f, 0.0f, // top left
-            -0.5f, -0.5f, 0.0f, // bottom left
-            0.5f, -0.5f, 0.0f, // bottom right
-            0.5f,  0.5f, 0.0f  // top right
+    private final String fragmentShaderCode = "precision mediump float;" +
+            "varying vec4 vColor;" +
+            "void main() {" +
+            "  gl_FragColor = vColor;" +
+            "}";
+
+    final float cubePositions[] = {
+            -1.0f, 1.0f, 1.0f,    //正面左上0
+            -1.0f, -1.0f, 1.0f,   //正面左下1
+            1.0f, -1.0f, 1.0f,    //正面右下2
+            1.0f, 1.0f, 1.0f,     //正面右上3
+            -1.0f, 1.0f, -1.0f,    //反面左上4
+            -1.0f, -1.0f, -1.0f,   //反面左下5
+            1.0f, -1.0f, -1.0f,    //反面右下6
+            1.0f, 1.0f, -1.0f,     //反面右上7
+    };
+    final short index[] = {
+            6, 7, 4, 6, 4, 5,    //后面
+            6, 3, 7, 6, 2, 3,    //右面
+            6, 5, 1, 6, 1, 2,    //下面
+            0, 3, 2, 0, 2, 1,    //正面
+            0, 1, 5, 0, 5, 4,    //左面
+            0, 7, 3, 0, 4, 7,    //上面
     };
 
-    float color[] = {1.0f, 1.0f, 1.0f, 1.0f}; //白色
+    float color[] = {
+            0f, 1f, 0f, 1f,
+            0f, 1f, 0f, 1f,
+            0f, 1f, 0f, 1f,
+            0f, 1f, 0f, 1f,
+            1f, 0f, 0f, 1f,
+            1f, 0f, 0f, 1f,
+            1f, 0f, 0f, 1f,
+            1f, 0f, 0f, 1f,
+    };
 
-    private FloatBuffer vertexBuffer;
+
+    private FloatBuffer vertexBuffer, colorBuffer;
     private int mProgram;
     private int mPositionHandle;
     private int mColorHandle;
     private ShortBuffer indexBuffer;
 
     private static final int COORDS_PER_VERTEX = 3;
-    static short index[]={
-            0,1,2,0,2,3
-    };
-
     //顶点个数
-    private final int vertexCount = triangleCoords.length / COORDS_PER_VERTEX;
+    private final int vertexCount = cubePositions.length / COORDS_PER_VERTEX;
+
+
     //顶点之间的偏移量
-    private final int vertexStride = COORDS_PER_VERTEX * 4; // 每个顶点四个字节
+    private final int vertexStride = 0; // 每个顶点四个字节
 
     private final float[] mMVPMatrix = new float[16];
     private final float[] mProjectMatrix = new float[16];
@@ -72,45 +96,51 @@ public class SquareActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
-        SquareSuface triangleSuface = new SquareSuface(this);
+        CubeSuface triangleSuface = new CubeSuface(this);
         setContentView(triangleSuface);
 
     }
 
 
-    private class SquareSuface extends GLSurfaceView {
+    private class CubeSuface extends GLSurfaceView {
 
 
-        public SquareSuface(Context context) {
+        public CubeSuface(Context context) {
             super(context);
             setEGLContextClientVersion(2);
-            SquareRender squareRender = new SquareRender();
+            CubeRender squareRender = new CubeRender();
             setRenderer(squareRender);
         }
-
-
     }
 
 
-    private class SquareRender implements GLSurfaceView.Renderer {
+    private class CubeRender implements GLSurfaceView.Renderer {
 
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
 
+            //开启深度测试
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
             //将背景设置为灰色
             GLES20.glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             //申请底层空间
             ByteBuffer bb = ByteBuffer.allocateDirect(
-                    triangleCoords.length * 4);
+                    cubePositions.length * 4);
             bb.order(ByteOrder.nativeOrder());
             //将坐标数据转换为FloatBuffer，用以传入给OpenGL ES程序
             vertexBuffer = bb.asFloatBuffer();
-            vertexBuffer.put(triangleCoords);
+            vertexBuffer.put(cubePositions);
             vertexBuffer.position(0);
 
-            ByteBuffer cc= ByteBuffer.allocateDirect(index.length*2);
+            ByteBuffer dd = ByteBuffer.allocateDirect(color.length * 4);
+            dd.order(ByteOrder.nativeOrder());
+            colorBuffer = dd.asFloatBuffer();
+            colorBuffer.put(color);
+            colorBuffer.position(0);
+
+            ByteBuffer cc = ByteBuffer.allocateDirect(index.length * 2);
             cc.order(ByteOrder.nativeOrder());
-            indexBuffer=cc.asShortBuffer();
+            indexBuffer = cc.asShortBuffer();
             indexBuffer.put(index);
             indexBuffer.position(0);
 
@@ -132,26 +162,26 @@ public class SquareActivity extends AppCompatActivity {
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
 
-           // GLES20.glViewport(0, 0, width, height);
             //计算宽高比
-            float ratio=(float)width/height;
+            float ratio = (float) width / height;
             //设置透视投影
-            Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 7);
+            Matrix.frustumM(mProjectMatrix, 0, -ratio, ratio, -1, 1, 3, 20);
             //设置相机位置
-            Matrix.setLookAtM(mViewMatrix, 0, 0, 0, 7.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
+            Matrix.setLookAtM(mViewMatrix, 0, 5.0f, 5.0f, 10.0f, 0f, 0f, 0f, 0f, 1.0f, 0.0f);
             //计算变换矩阵
-            Matrix.multiplyMM(mMVPMatrix,0,mProjectMatrix,0,mViewMatrix,0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mViewMatrix, 0);
         }
 
         @Override
         public void onDrawFrame(GL10 gl) {
 
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
             //将程序加入到OpenGLES2.0环境
             GLES20.glUseProgram(mProgram);
             //获取变换矩阵vMatrix成员句柄
-            mMatrixHandler= GLES20.glGetUniformLocation(mProgram,"vMatrix");
+            mMatrixHandler = GLES20.glGetUniformLocation(mProgram, "vMatrix");
             //指定vMatrix的值
-            GLES20.glUniformMatrix4fv(mMatrixHandler,1,false,mMVPMatrix,0);
+            GLES20.glUniformMatrix4fv(mMatrixHandler, 1, false, mMVPMatrix, 0);
             //获取顶点着色器的vPosition成员句柄
             mPositionHandle = GLES20.glGetAttribLocation(mProgram, "vPosition");
             //启用三角形顶点的句柄
@@ -161,12 +191,17 @@ public class SquareActivity extends AppCompatActivity {
                     GLES20.GL_FLOAT, false,
                     vertexStride, vertexBuffer);
             //获取片元着色器的vColor成员的句柄
-            mColorHandle = GLES20.glGetUniformLocation(mProgram, "vColor");
+            mColorHandle = GLES20.glGetAttribLocation(mProgram, "aColor");
             //设置绘制三角形的颜色
-            GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+            //   GLES20.glUniform4fv(mColorHandle, 1, color, 0);
             //绘制三角形
-          //  GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
-            GLES20.glDrawElements(GLES20.GL_TRIANGLES,index.length, GLES20.GL_UNSIGNED_SHORT,indexBuffer);
+            //  GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, vertexCount);
+            GLES20.glEnableVertexAttribArray(mColorHandle);
+            GLES20.glVertexAttribPointer(mColorHandle, 4,
+                    GLES20.GL_FLOAT, false,
+                    0, colorBuffer);
+            //索引法绘制正方体
+            GLES20.glDrawElements(GLES20.GL_TRIANGLES, index.length, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
             //禁止顶点数组的句柄
             GLES20.glDisableVertexAttribArray(mPositionHandle);
         }
